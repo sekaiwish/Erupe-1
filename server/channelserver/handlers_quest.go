@@ -112,15 +112,20 @@ func handleMsgSysGetFile(s *Session, p mhfpacket.MHFPacket) {
 		}
 		doAckBufSucceed(s, pkt.AckHandle, data)
 	} else {
+		if s.server.erupeConfig.GameplayOptions.SeasonOverride {
+			pkt.Filename = seasonConversion(s, pkt.Filename)
+		}
+
+		// Rewrite the quest season to 0 when file is missing to fix custom event quest crashes
+		if _, err := os.Stat(filepath.Join(s.server.erupeConfig.BinPath, fmt.Sprintf("quests/%s.bin", pkt.Filename))); err != nil {
+			pkt.Filename = fmt.Sprintf("%s%d", pkt.Filename[:6], 0)
+		}
+
 		if s.server.erupeConfig.DebugOptions.QuestTools {
 			s.logger.Debug(
 				"Quest",
 				zap.String("Filename", pkt.Filename),
 			)
-		}
-
-		if s.server.erupeConfig.GameplayOptions.SeasonOverride {
-			pkt.Filename = seasonConversion(s, pkt.Filename)
 		}
 
 		data, err := os.ReadFile(filepath.Join(s.server.erupeConfig.BinPath, fmt.Sprintf("quests/%s.bin", pkt.Filename)))
