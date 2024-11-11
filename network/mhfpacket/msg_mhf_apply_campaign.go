@@ -2,6 +2,7 @@ package mhfpacket
 
 import (
 	"errors"
+	"erupe-ce/common/bfutil"
 	"erupe-ce/common/byteframe"
 	"erupe-ce/network"
 	"erupe-ce/network/clientctx"
@@ -9,10 +10,9 @@ import (
 
 // MsgMhfApplyCampaign represents the MSG_MHF_APPLY_CAMPAIGN
 type MsgMhfApplyCampaign struct {
-	AckHandle uint32
-	Unk0      uint32
-	Unk1      uint16
-	Unk2      []byte
+	AckHandle  uint32
+	CampaignID uint32
+	Code       string
 }
 
 // Opcode returns the ID associated with this packet type.
@@ -23,9 +23,9 @@ func (m *MsgMhfApplyCampaign) Opcode() network.PacketID {
 // Parse parses the packet from binary
 func (m *MsgMhfApplyCampaign) Parse(bf *byteframe.ByteFrame, ctx *clientctx.ClientContext) error {
 	m.AckHandle = bf.ReadUint32()
-	m.Unk0 = bf.ReadUint32()
-	m.Unk1 = bf.ReadUint16()
-	m.Unk2 = bf.ReadBytes(16)
+	m.CampaignID = bf.ReadUint32()
+	bf.ReadUint16() // Zeroed
+	m.Code = string(bfutil.UpToNull(bf.ReadBytes(16)))
 	return nil
 }
 
