@@ -224,6 +224,16 @@ func handleMsgMhfInfoFesta(s *Session, p mhfpacket.MHFPacket) {
 		if err != nil {
 			continue
 		}
+		
+		switch _config.ErupeConfig.RealClientMode {
+		case _config.F5:
+			if (trial.Objective == 1 || trial.Objective == 2 || trial.Objective == 3) && trial.GoalID > 106 {
+				continue
+			}
+			if trial.Objective == 4 && trial.GoalID > 6430 {
+				continue
+			}
+		}
 		trials = append(trials, trial)
 	}
 	bf.WriteUint16(uint16(len(trials)))
@@ -241,7 +251,6 @@ func handleMsgMhfInfoFesta(s *Session, p mhfpacket.MHFPacket) {
 	}
 
 	// The Winner and Loser Armor IDs are missing
-	// Item 7011 may not exist in older versions, remove to prevent crashes
 	rewards := []FestaReward{
 		{1, 0, 7, 350, 1520, 0, 0, 0},
 		{1, 0, 7, 1000, 7011, 0, 0, 1},
@@ -268,6 +277,15 @@ func handleMsgMhfInfoFesta(s *Session, p mhfpacket.MHFPacket) {
 		{5, 0, 12, 1000, 0, 0, 0, 0},
 		{5, 0, 13, 0, 0, 0, 0, 0},
 		//{5, 0, 1, 0, 0, 0, 0, 0},
+	}
+
+	// Item 7011 does not exist in older versions, filtering to prevent crashes
+	filteredRewards := []FestaReward{}
+	for _, retroReward := range rewards {
+		if _config.ErupeConfig.RealClientMode <= _config.F5 && retroReward.ItemType == 7 && retroReward.ItemID == 7011 {
+			continue
+		}
+		filteredRewards = append(filteredRewards, retroReward)
 	}
 
 	bf.WriteUint16(uint16(len(rewards)))
