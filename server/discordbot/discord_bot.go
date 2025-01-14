@@ -87,6 +87,7 @@ func (bot *DiscordBot) Start() (err error) {
 func (bot *DiscordBot) NormalizeDiscordMessage(message string) string {
 	userRegex := regexp.MustCompile(`<@!?(\d{17,19})>`)
 	emojiRegex := regexp.MustCompile(`(?:<a?)?:(\w+):(?:\d{18}>)?`)
+	messageRegex := regexp.MustCompile(`[^\x{20}-\x{7E}]`)
 
 	result := ReplaceTextAll(message, userRegex, func(userId string) string {
 		user, err := bot.Session.User(userId)
@@ -101,6 +102,8 @@ func (bot *DiscordBot) NormalizeDiscordMessage(message string) string {
 	result = ReplaceTextAll(result, emojiRegex, func(emojiName string) string {
 		return ":" + emojiName + ":"
 	})
+
+	result = messageRegex.ReplaceAllString(result, "")
 
 	return result
 }
